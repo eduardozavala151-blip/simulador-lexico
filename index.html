@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de Analizador Léxico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="hero">
+  <h1>Simulador de <span>Analizador Léxico</span></h1>
+  <p>Escribe una expresión y mira cómo se convierte en lexemas, tokens, tabla de tokens y errores léxicos.</p>
+  <nav>
+    <a href="#simulador">Componentes léxicos</a>
+    <a href="#patrones">Patrones y lexemas</a>
+    <a href="#tokens">Tabla de tokens</a>
+    <a href="#errores">Errores léxicos</a>
+    <a href="#generador">Generador</a>
+  </nav>
+</header>
+
+<main>
+<section class="card">
+  <h2>¿Cómo funciona?</h2>
+  <p class="def">El código fuente entra al analizador léxico, que lo recorre carácter por carácter con los patrones definidos. Cada coincidencia produce un token en la tabla; lo que no coincide con ningún patrón es un error léxico. Un generador (Lex, Flex) construye ese analizador a partir de las reglas.</p>
+  <div class="scroll"><svg viewBox="0 0 900 290" role="img" aria-label="Diagrama del analizador léxico">
+    <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="#14163a"/></marker></defs>
+    <g class="flow" fill="none" stroke="#14163a" stroke-width="2" marker-end="url(#ar)">
+      <path id="pA" d="M170,150 L296,150"/><path id="pB" d="M520,130 L636,76"/>
+      <path id="pC" d="M520,170 L636,226"/><path id="pD" d="M410,60 L410,96"/>
+    </g>
+    <g font-family="Manrope,sans-serif" text-anchor="middle" font-weight="700" fill="#14163a">
+      <rect x="20" y="110" width="150" height="80" rx="12" fill="#fff" stroke="#14163a" stroke-width="2"/>
+      <text x="95" y="146" font-size="17">Código fuente</text><text x="95" y="170" font-size="14" font-family="IBM Plex Mono,monospace">x = 3 + y;</text>
+      <rect x="300" y="100" width="220" height="100" rx="14" fill="#3b2bff"/>
+      <text x="410" y="142" fill="#fff" font-size="20">Analizador léxico</text><text x="410" y="168" fill="#d9d6ff" font-size="14">patrones → lexemas → tokens</text>
+      <rect x="300" y="6" width="220" height="54" rx="12" fill="#fff" stroke="#3b2bff" stroke-width="2" stroke-dasharray="6 4"/>
+      <text x="410" y="30" fill="#3b2bff" font-size="16">Generador (Lex / Flex)</text><text x="410" y="48" font-size="13" font-weight="400">reglas y expresiones regulares</text>
+      <rect x="640" y="40" width="240" height="64" rx="12" fill="#fff" stroke="#14163a" stroke-width="2"/>
+      <text x="760" y="66" font-size="17">Tabla de tokens</text><text x="760" y="88" font-size="13" font-weight="400">token · lexema · línea · columna</text>
+      <rect x="640" y="198" width="240" height="64" rx="12" fill="#fff" stroke="#e5173f" stroke-width="2"/>
+      <text x="760" y="224" fill="#e5173f" font-size="17">Errores léxicos</text><text x="760" y="246" font-size="13" font-weight="400">símbolo no reconocido</text>
+    </g>
+    <circle r="6" fill="#3b2bff"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#pA"/></animateMotion></circle>
+    <circle r="6" fill="#3b2bff"><animateMotion dur="1.6s" begin=".5s" repeatCount="indefinite"><mpath href="#pB"/></animateMotion></circle>
+    <circle r="6" fill="#e5173f"><animateMotion dur="1.6s" begin="1s" repeatCount="indefinite"><mpath href="#pC"/></animateMotion></circle>
+    <circle r="6" fill="#3b2bff"><animateMotion dur="1.2s" repeatCount="indefinite"><mpath href="#pD"/></animateMotion></circle>
+  </svg></div>
+</section>
+
+<section class="card" id="simulador">
+  <h2>Simulador</h2>
+  <p class="def">Escribe una expresión o elige un ejemplo y pulsa Analizar.</p>
+  <textarea id="entrada" rows="4" spellcheck="false" aria-label="Expresión a analizar">int total = 3.14 * (radio + 25); // área</textarea>
+  <div class="bar">
+    <button id="btnAnalizar" class="go">Analizar</button>
+    <button class="ej" data-e='if (a >= 10) { print("ok"); }'>Ejemplo: condicional</button>
+    <button class="ej" data-e='x = 3abc + @ ; s = "hola'>Ejemplo: con errores</button>
+    <button class="ej" data-e="">Limpiar</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <h3>Lexemas detectados en tu expresión</h3>
+  <pre id="src" class="src"></pre>
+  <h3>Componentes léxicos</h3>
+  <p class="def">Son las categorías del lenguaje (identificador, número, operador…) a las que pertenece cada lexema.</p>
+  <div id="comps" class="comps"></div>
+</section>
+
+<section class="card" id="patrones">
+  <h2>Patrones y lexemas</h2>
+  <p class="def">El patrón es la expresión regular que describe una categoría; el lexema es el texto concreto que la cumple.</p>
+  <div class="scroll"><table id="tPat"></table></div>
+</section>
+
+<section class="card" id="tokens">
+  <h2>Tabla de tokens</h2>
+  <p class="def">Registro ordenado de cada token con su lexema, posición y atributo (valor numérico o entrada en la tabla de símbolos TS).</p>
+  <div class="scroll"><table id="tTok"></table></div>
+</section>
+
+<section class="card" id="errores">
+  <h2>Errores léxicos</h2>
+  <p class="def">Un error léxico ocurre cuando una secuencia de caracteres no cumple ningún patrón válido.</p>
+  <ul id="errs" class="errs"></ul>
+</section>
+
+<section class="card" id="generador">
+  <h2>Generador de analizadores léxicos</h2>
+  <p class="def">Herramientas como Lex, Flex, JFlex o ANTLR reciben reglas (patrón + acción) y generan el analizador. Aquí el simulador hace lo mismo: une las reglas en una sola expresión regular y construye el escáner. Agrega una regla y vuelve a analizar.</p>
+  <div class="bar">
+    <input id="rn" placeholder="NOMBRE_TOKEN" aria-label="Nombre del token">
+    <input id="rr" placeholder="patrón, ej: \bPI\b" aria-label="Expresión regular">
+    <button id="btnRegla" class="go">Agregar regla</button>
+    <button id="btnReset" class="ej">Restablecer reglas</button>
+  </div>
+  <p id="msg" class="def" role="status"></p>
+  <h3>Especificación generada (estilo Flex)</h3>
+  <pre id="spec" class="spec"></pre>
+</section>
+</main>
+<footer>Simulador de análisis léxico · Compiladores</footer>
+<script src="js/app.js"></script>
+</body>
+</html>
